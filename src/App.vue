@@ -5,7 +5,7 @@
       <div class="nav-container">
         <!-- Logo -->
         <div class="nav-brand" @click="store.navigate('board')">
-          <div class="brand-logo">H</div>
+          <div class="brand-logo">Hr</div>
           <span class="brand-name">Holdr<span class="brand-dot">.</span></span>
         </div>
 
@@ -148,7 +148,8 @@ import WalletView from './components/WalletView.vue'
   justify-content: center;
   color: white;
   font-weight: 900;
-  font-size: 1.1rem;
+  font-size: 0.95rem;
+  letter-spacing: -0.04em;
 }
 .brand-name {
   font-size: 1.1rem;

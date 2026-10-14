@@ -8,7 +8,7 @@
 
     <div class="auth-container">
       <div class="auth-brand">
-        <div class="auth-logo">H</div>
+        <div class="auth-logo">Hr</div>
         <h1 class="auth-title">Holdr<span style="color: var(--accent)">.</span></h1>
         <p class="auth-subtitle">Pan-African milestone escrow infrastructure</p>
       </div>
