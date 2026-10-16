@@ -167,13 +167,13 @@ async function submit() {
   loading.value = true
   try {
     await new Promise(r => setTimeout(r, 600))
-    const job = store.createJob({
+    const job = await store.createJob({
       title: form.title,
       description: form.description,
       currency: form.currency,
-      autoReleaseDays: form.autoReleaseDays,
-      total: totalAmount.value,
-      milestones: milestones.value.map(m => ({ title: m.title, amount: Number(m.amount) })),
+      auto_release_days: form.autoReleaseDays,
+      visibility: 'public',
+      milestone: milestones.value.map(m => ({ title: m.title, amount: Number(m.amount) })),
     })
     store.navigate('jobDetail', { jobId: job.id })
   } catch (e) {

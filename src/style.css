@@ -366,3 +366,8 @@ h1, h2, h3, h4, h5, h6 {
   opacity: 0;
   transform: translateY(-6px);
 }
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

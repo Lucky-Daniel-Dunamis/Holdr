@@ -5,7 +5,7 @@
         <h1 class="board-title">Job Board</h1>
         <p class="text-muted">{{ filteredJobs.length }} job{{ filteredJobs.length !== 1 ? 's' : '' }} available</p>
       </div>
-      <button v-if="store.isFreelancer" id="post-job-btn" class="btn btn-primary" @click="store.navigate('createJob')">
+      <button v-if="store.isClient" id="post-job-btn" class="btn btn-primary" @click="store.navigate('createJob')">
         + Post a Job
       </button>
     </div>
@@ -13,8 +13,14 @@
     <!-- Filters -->
     <div class="filters-row">
       <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input id="board-search" v-model="search" type="text" class="form-input search-input" placeholder="Search jobs or freelancers…" />
+        <Search class="search-icon" :size="16" :stroke-width="2" />
+        <input
+          id="board-search"
+          v-model="search"
+          type="text"
+          class="form-input search-input"
+          placeholder="Search jobs or freelancers…"
+        />
       </div>
       <select id="board-currency" v-model="filterCurrency" class="form-select filter-select">
         <option value="all">All currencies</option>
@@ -38,7 +44,7 @@
 
     <!-- Error state -->
     <div v-else-if="fetchError" class="empty-state">
-      <div class="empty-icon">⚠️</div>
+      <AlertTriangle class="empty-icon" :size="48" />
       <h3>Something went wrong</h3>
       <p class="text-muted">{{ fetchError }}</p>
       <button class="btn btn-primary mt-4" @click="retry">Retry</button>
@@ -46,12 +52,12 @@
 
     <!-- Empty state -->
     <div v-else-if="filteredJobs.length === 0" class="empty-state">
-      <div class="empty-icon">📋</div>
-      <h3>{{ search || priceMin || priceMax || filterCurrency !== 'all' ? 'No matching jobs' : 'No jobs yet' }}</h3>
+      <ClipboardList class="empty-icon" :size="48" />
+      <h3>No matching jobs</h3>
       <p class="text-muted">
-        {{ search || priceMin || priceMax || filterCurrency !== 'all' ? 'Try adjusting your filters' : 'Be the first to post a job' }}
+        Try adjusting your filters
       </p>
-      <button v-if="store.isFreelancer && !(search || priceMin || priceMax)" class="btn btn-primary mt-4" @click="store.navigate('createJob')">
+      <button v-if="store.isClient && !(search || priceMin || priceMax)" class="btn btn-primary mt-4" @click="store.navigate('createJob')">
         Post a Job
       </button>
     </div>
@@ -73,7 +79,7 @@
         <div class="job-card-meta">
           <div class="meta-stat">
             <span class="meta-key">Total</span>
-            <span class="meta-val">{{ store.formatCurrency(job.total, job.currency) }}</span>
+            <span class="meta-val">{{ store.formatCurrency(job.total_amount, job.currency) }}</span>
           </div>
           <div class="meta-stat">
             <span class="meta-key">Milestones</span>
@@ -82,10 +88,11 @@
         </div>
         <div class="job-card-footer">
           <div class="avatar-row">
-            <div class="avatar-xs">{{ store.getFreelancerName(job.freelancerId).charAt(0) }}</div>
-            <span class="text-sm text-muted">{{ store.getFreelancerName(job.freelancerId) }}</span>
+            <span class="text-sm text-muted">{{ job.freelancer_id ? 'Freelancer joined' : 'Open for freelancers' }}</span>
           </div>
-          <span class="card-cta">View →</span>
+          <span class="card-cta">
+            View <ArrowRight :size="14" />
+          </span>
         </div>
       </div>
     </div>
@@ -93,8 +100,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted  } from 'vue'
+
 import { store } from '../store.js'
+onMounted(() => {
+  store.fetchJobs()
+})
 
 const search = ref('')
 const filterCurrency = ref('all')
@@ -110,16 +121,19 @@ const filteredJobs = computed(() => {
   if (search.value) {
     const q = search.value.toLowerCase()
     jobs = jobs.filter(j =>
-      j.title.toLowerCase().includes(q) ||
-      j.description.toLowerCase().includes(q) ||
-      store.getFreelancerName(j.freelancerId).toLowerCase().includes(q)
+        j.title.toLowerCase().includes(q) ||
+        j.description.toLowerCase().includes(q)
     )
   }
   if (filterCurrency.value !== 'all') jobs = jobs.filter(j => j.currency === filterCurrency.value)
-  if (priceMin.value) jobs = jobs.filter(j => j.total >= Number(priceMin.value))
-  if (priceMax.value) jobs = jobs.filter(j => j.total <= Number(priceMax.value))
+  if (priceMin.value) jobs = jobs.filter(j => j.total_amount >= Number(priceMin.value))
+  if (priceMax.value) jobs = jobs.filter(j => j.total_amount <= Number(priceMax.value))
   return jobs
 })
+</script>
+
+<script>
+import { Search, AlertTriangle, ClipboardList, ArrowRight } from 'lucide-vue-next'
 </script>
 
 <style scoped>
@@ -129,21 +143,28 @@ const filteredJobs = computed(() => {
 
 .filters-row { display: flex; gap: 10px; margin-bottom: 28px; flex-wrap: wrap; }
 .search-wrap { position: relative; flex: 1; min-width: 220px; }
-.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; pointer-events: none; }
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
 .search-input { padding-left: 36px; }
 .filter-select { width: 160px; }
 .price-input { width: 130px; }
 
-.jobs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 18px; }
+.jobs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 18px; }
 
 .skeleton-card {
   background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); padding: 24px;
+  border-radius: var(--radius-lg); padding: 22px;
 }
 
 .job-card {
   background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); padding: 22px;
+  border-radius: var(--radius-lg); padding: 18px;
   cursor: pointer; transition: all 0.25s ease;
   display: flex; flex-direction: column; gap: 12px;
 }
@@ -176,9 +197,19 @@ const filteredJobs = computed(() => {
   border-radius: 50%; display: flex; align-items: center; justify-content: center;
   font-size: 0.7rem; font-weight: 800; color: white; flex-shrink: 0;
 }
-.card-cta { font-size: 0.8rem; font-weight: 700; color: var(--accent-light); }
+.card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent-light);
+}
 
 .empty-state { text-align: center; padding: 80px 20px; }
-.empty-icon { font-size: 3rem; margin-bottom: 16px; }
+.empty-icon {
+  color: var(--accent);
+  margin-bottom: 16px;
+}
 .empty-state h3 { font-size: 1.2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
 </style>

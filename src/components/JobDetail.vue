@@ -30,8 +30,8 @@
         </div>
         <div class="header-amount">
           <div class="amount-label text-muted">Total Value</div>
-          <div class="amount-big">{{ store.formatCurrency(job.total, job.currency) }}</div>
-          <div class="text-muted text-sm">Auto-release: {{ job.autoReleaseDays }}d</div>
+          <div class="amount-big">{{ store.formatCurrency(job.total_amount, job.currency) }}</div>
+          <div class="text-muted text-sm">Auto-release: {{ job.auto_release_days }}d</div>
         </div>
       </div>
 
@@ -39,21 +39,22 @@
       <div class="parties-strip">
         <div class="party">
           <div class="party-role text-muted">Freelancer</div>
-          <div class="party-name">
-            <div class="avatar-sm">{{ store.getFreelancerName(job.freelancerId).charAt(0) }}</div>
-            {{ store.getFreelancerName(job.freelancerId) }}
-          </div>
+          <div class="party-name">{{ job.freelancer_id ? 'Freelancer Joined' : 'Awaiting Freelancers' }}</div>
         </div>
         <div class="party-arrow">⇄</div>
         <div class="party">
           <div class="party-role text-muted">Client</div>
-          <div class="party-name">
-            <div class="avatar-sm">{{ store.getClientName(job.clientId).charAt(0) }}</div>
-            {{ store.getClientName(job.clientId) }}
-          </div>
+          <div class="party-name">{{ isJobClient ? 'You' : 'Client' }}</div>
         </div>
       </div>
 
+      <div v-if="canFreelancerJoin" class="pay-cta">
+        <div class="pay-cta-text">
+          <span>🤝</span>
+          <span>Join this job to start working on it</span>
+        </div>
+        <button class="btn btn-primary btn-lg" @click="doJoin">Join Job</button>
+      </div>
       <!-- Client CTA: Accept & Pay -->
       <div v-if="canClientPay" class="pay-cta">
         <div class="pay-cta-text">
@@ -61,7 +62,7 @@
           <span>Your payment is held in escrow — only released when you approve each milestone</span>
         </div>
         <button id="accept-pay-btn" class="btn btn-primary btn-lg" @click="store.navigate('payNow', { jobId: job.id })">
-          Accept &amp; Pay {{ store.formatCurrency(job.total, job.currency) }}
+          Accept &amp; Pay {{ store.formatCurrency(job.total_amount, job.currency) }}
         </button>
       </div>
     </div>
@@ -81,29 +82,23 @@
               <span :class="['badge', msBadge(m.status)]">{{ m.status }}</span>
             </div>
 
-            <!-- Countdown for submitted -->
-            <div v-if="m.status === 'submitted' && m.autoReleaseAt" class="countdown-chip">
-              <span>⏱️</span> {{ countdown(m.autoReleaseAt) }}
-            </div>
-
             <!-- Submission preview (client only) -->
             <div v-if="m.status === 'submitted' && isJobClient" class="submission-peek">
               <div class="peek-label text-muted">Note from freelancer</div>
               <div class="peek-text">{{ m.note || '—' }}</div>
-              <a v-if="m.fileOrLink" :href="m.fileOrLink" target="_blank" class="peek-link">📎 {{ m.fileOrLink }}</a>
             </div>
 
             <!-- Paid -->
-            <div v-if="m.status === 'paid'" class="paid-tag">✅ Paid out to freelancer</div>
+            <div v-if="m.status === 'paid'" class="paid-tag"> Paid out to freelancer</div>
 
             <!-- Actions -->
             <div class="ms-actions">
               <!-- Freelancer: submit work -->
               <button
-                v-if="isJobFreelancer && m.status === 'funded'"
+                  v-if="isJobFreelancer && (m.status === 'pending' || m.status === 'funded')"
                 class="btn btn-primary btn-sm"
                 @click="store.navigate('submitWork', { jobId: job.id, milestoneId: m.id })"
-              >📤 Submit Work</button>
+              > Submit Work</button>
 
               <!-- Client: review/approve/request changes -->
               <template v-if="isJobClient && m.status === 'submitted'">
@@ -117,25 +112,7 @@
       </div>
     </div>
 
-    <!-- Transactions -->
-    <div class="card">
-      <h2 class="section-h">Transactions</h2>
-      <div v-if="!job.transactions.length" class="text-muted text-sm" style="padding: 8px 0">No transactions yet.</div>
-      <div v-else class="tx-list">
-        <div v-for="tx in job.transactions" :key="tx.id" class="tx-row">
-          <div :class="['tx-icon', 'tx-' + tx.type]">
-            {{ tx.type === 'escrow' ? '🔒' : tx.type === 'payout' ? '💸' : '💳' }}
-          </div>
-          <div class="tx-info">
-            <div class="tx-desc">{{ tx.description }}</div>
-            <div class="tx-date text-muted text-sm">{{ fmtDate(tx.timestamp) }}</div>
-          </div>
-          <div :class="['tx-amount', tx.type === 'payout' ? 'text-success' : 'text-accent']">
-            {{ tx.type === 'payout' ? '+' : '' }}{{ store.formatCurrency(tx.amount, job.currency) }}
-          </div>
-        </div>
-      </div>
-    </div>
+
   </div>
 
   <div v-else class="empty-state">
@@ -146,20 +123,26 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { store } from '../store.js'
+
+onMounted(() => {
+  if (store.selectedJobId) store.fetchJob(store.selectedJobId)
+})
 
 const showConfirm = ref(false)
 const confirmMilestone = ref(null)
 const approving = ref(false)
 
 const job = computed(() => store.selectedJob)
-const isJobClient = computed(() => job.value?.clientId === store.currentUser?.id)
-const isJobFreelancer = computed(() => job.value?.freelancerId === store.currentUser?.id)
+const isJobClient = computed(() => job.value?.client_id === store.currentUser?.id)
+const isJobFreelancer = computed(() => job.value?.freelancer_id === store.currentUser?.id)
 const canClientPay = computed(() =>
-  store.isClient && job.value?.status === 'open' && !job.value?.clientId
+    isJobClient.value && job.value?.status === 'open' && !!job.value?.freelancer_id
 )
-
+const canFreelancerJoin = computed(() =>
+    store.isFreelancer && job.value?.status === 'open' && !job.value?.freelancer_id
+)
 function msBadge(s) {
   return { pending:'badge-pending', funded:'badge-funded', submitted:'badge-submitted', approved:'badge-approved', paid:'badge-paid' }[s] || 'badge-pending'
 }
@@ -174,7 +157,9 @@ function countdown(ts) {
   if (hrs > 0) return `Auto-releases in ${hrs}h ${mins}m`
   return `Auto-releases in ${mins}m`
 }
-
+async function doJoin() {
+  await store.joinJob(job.value.id)
+}
 function fmtDate(ts) {
   return new Date(ts).toLocaleString('en', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
 }
@@ -183,15 +168,14 @@ function openConfirm(m) { confirmMilestone.value = m; showConfirm.value = true }
 
 async function doApprove() {
   approving.value = true
-  await new Promise(r => setTimeout(r, 700))
-  store.approveMilestone(job.value.id, confirmMilestone.value.id)
-  showConfirm.value = false
-  approving.value = false
+  try {
+    await store.approveMilestone(job.value.id, confirmMilestone.value.id)
+  } finally {
+    showConfirm.value = false
+    approving.value = false
+  }
 }
 
-function doRequestChanges(m) {
-  store.requestChanges(job.value.id, m.id)
-}
 </script>
 
 <style scoped>
@@ -201,16 +185,16 @@ function doRequestChanges(m) {
 .job-header-card { }
 .header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-bottom: 24px; }
 .header-info { flex: 1; }
-.job-title-h { font-size: 1.7rem; font-weight: 900; margin: 12px 0 8px; line-height: 1.25; }
+.job-title-h { font-size: 1.45rem; font-weight: 900; margin: 12px 0 8px; line-height: 1.25; }
 .job-desc-p { font-size: 0.9rem; line-height: 1.7; max-width: 580px; }
 .header-amount { text-align: right; flex-shrink: 0; }
 .amount-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
-.amount-big { font-size: 2rem; font-weight: 900; color: var(--accent-light); line-height: 1; margin-bottom: 6px; }
+.amount-big { font-size: 1.65rem; font-weight: 900; color: var(--accent-light); line-height: 1; margin-bottom: 6px; }
 
 .parties-strip { display: flex; align-items: center; gap: 18px; padding: 18px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin-bottom: 18px; }
 .party { }
 .party-role { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
-.party-name { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.9rem; }
+.party-name { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.84rem; }
 .party-arrow { color: var(--text-muted); font-size: 1.3rem; }
 .avatar-sm {
   width: 30px; height: 30px; background: linear-gradient(135deg, var(--accent), #a855f7);
@@ -224,9 +208,9 @@ function doRequestChanges(m) {
   border: 1px solid rgba(99,102,241,0.3);
   border-radius: var(--radius-md); padding: 18px 20px;
 }
-.pay-cta-text { display: flex; align-items: flex-start; gap: 8px; font-size: 0.875rem; color: var(--text-secondary); flex: 1; line-height: 1.5; }
+.pay-cta-text { display: flex; align-items: flex-start; gap: 8px; font-size: 0.82rem; color: var(--text-secondary); flex: 1; line-height: 1.5; }
 
-.section-h { font-size: 1.05rem; font-weight: 800; margin-bottom: 18px; }
+.section-h { font-size: 0.98rem; font-weight: 800; margin-bottom: 18px; }
 .milestones-list { display: flex; flex-direction: column; }
 .ms-detail-row { display: flex; gap: 14px; padding: 18px 0; border-bottom: 1px solid var(--border); }
 .ms-detail-row:last-child { border-bottom: none; }
@@ -238,8 +222,8 @@ function doRequestChanges(m) {
 }
 .ms-body { flex: 1; }
 .ms-header-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-.ms-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 3px; }
-.ms-amount { font-size: 1.05rem; font-weight: 900; }
+.ms-title { font-size: 0.88rem; font-weight: 700; margin-bottom: 3px; }
+.ms-amount { font-size: 0.95rem; font-weight: 900; }
 
 .countdown-chip {
   display: inline-flex; align-items: center; gap: 5px;
@@ -283,8 +267,8 @@ function doRequestChanges(m) {
   border-radius: var(--radius-xl); padding: 40px; max-width: 400px; width: 90%;
   text-align: center; animation: fadeIn 0.2s ease;
 }
-.confirm-emoji { font-size: 3rem; margin-bottom: 14px; }
-.confirm-box h3 { font-size: 1.3rem; font-weight: 800; margin-bottom: 10px; }
+.confirm-emoji { font-size: 2.4rem; margin-bottom: 14px; }
+.confirm-box h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: 10px; }
 .confirm-box p { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6; margin-bottom: 28px; }
 .confirm-btns { display: flex; gap: 12px; justify-content: center; }
 
@@ -302,3 +286,56 @@ function doRequestChanges(m) {
   .pay-cta { flex-direction: column; align-items: flex-start; }
 }
 </style>
+
+.jobs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+  gap: 14px;
+}
+
+.skeleton-card {
+  padding: 16px;
+  border-radius: var(--radius-md);
+}
+
+.job-card {
+  padding: 15px;
+  border-radius: var(--radius-md);
+  gap: 9px;
+}
+
+.job-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 26px rgba(99, 102, 241, 0.16);
+}
+
+.job-card-title {
+  font-size: 0.98rem;
+  line-height: 1.3;
+}
+
+.job-card-desc {
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.job-card-meta {
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.meta-key {
+  font-size: 0.64rem;
+}
+
+.meta-val {
+  font-size: 0.92rem;
+}
+
+.job-card-footer {
+  min-height: 24px;
+}
+
+.card-cta {
+  font-size: 0.76rem;
+}

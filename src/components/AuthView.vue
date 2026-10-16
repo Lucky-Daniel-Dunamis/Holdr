@@ -38,17 +38,7 @@
                 {{ loading ? 'Signing in…' : 'Sign In' }}
               </button>
 
-              <div class="demo-logins">
-                <div class="demo-divider"><span>OR QUICK DEMO</span></div>
-                <div class="demo-btns">
-                  <button type="button" class="btn btn-ghost btn-sm" @click="store.loginAsDemo('client')">
-                    🏢 Login as Client (Amara)
-                  </button>
-                  <button type="button" class="btn btn-ghost btn-sm" @click="store.loginAsDemo('freelancer')">
-                    💻 Login as Freelancer (Tobi)
-                  </button>
-                </div>
-              </div>
+
             </form>
 
             <!-- REGISTER -->
@@ -115,7 +105,7 @@ async function handleLogin() {
   if (!lf.email || !lf.password) { error.value = 'Please fill in all fields'; return }
   loading.value = true
   try { await delay(500); store.login(lf.email, lf.password) }
-  catch (e) { error.value = e.message }
+  catch (e) { error.value = e.response?.data?.detail || 'Something went wrong' }
   finally { loading.value = false }
 }
 
@@ -125,7 +115,7 @@ async function handleRegister() {
   if (rf.password.length < 8) { error.value = 'Password must be at least 8 characters'; return }
   loading.value = true
   try { await delay(500); store.register({ ...rf }) }
-  catch (e) { error.value = e.message }
+  catch (e) { error.value = e.response?.data?.detail || 'Something went wrong' }
   finally { loading.value = false }
 }
 </script>

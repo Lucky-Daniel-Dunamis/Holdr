@@ -1,11 +1,19 @@
 <template>
   <div class="pay-now">
-    <button class="btn btn-ghost btn-sm back-btn" @click="store.navigate('jobDetail', { jobId: store.selectedJobId })">← Back</button>
+    <button
+      class="btn btn-ghost btn-sm back-btn"
+      @click="store.navigate('jobDetail', { jobId: store.selectedJobId })"
+    >
+      <ArrowLeft :size="15" />
+      Back
+    </button>
 
     <!-- SUMMARY -->
     <div v-if="step === 'summary' && job" class="pay-wrap">
       <div class="pay-header">
-        <div class="pay-icon-wrap">🔒</div>
+        <div class="pay-icon-wrap">
+          <ShieldCheck :size="38" :stroke-width="1.8" />
+        </div>
         <h1>Secure Payment</h1>
         <p class="text-muted">Your money is held safely in escrow — never touches the freelancer until you approve.</p>
       </div>
@@ -24,155 +32,77 @@
         <div class="divider"></div>
         <div class="total-line">
           <span class="font-bold">Total</span>
-          <span class="pay-total">{{ store.formatCurrency(job.total, job.currency) }}</span>
+          <span class="pay-total">{{ store.formatCurrency(job.total_amount, job.currency) }}</span>
         </div>
         <div class="guarantee-list">
-          <div class="guarantee-item"><span>🔒</span><span>Money goes into escrow — not the freelancer's pocket</span></div>
-          <div class="guarantee-item"><span>✅</span><span>Each milestone releases <em>only</em> after your approval</span></div>
-          <div class="guarantee-item"><span>⏱️</span><span>Auto-releases after {{ job.autoReleaseDays }} days if you don't respond</span></div>
+          <div class="guarantee-item">
+            <ShieldCheck :size="16" />
+            <span>Money goes into escrow — not the freelancer's pocket</span>
+          </div>
+
+          <div class="guarantee-item">
+            <CheckCircle2 :size="16" />
+            <span>Each milestone releases <em>only</em> after your approval</span>
+          </div>
+
+          <div class="guarantee-item">
+            <Clock3 :size="16" />
+            <span>Auto-releases after {{ job.autoReleaseDays }} days if you don't respond</span>
+          </div>
         </div>
-        <button id="continue-checkout-btn" class="btn btn-primary btn-lg btn-full" @click="step = 'checkout'">
-          Continue to Checkout
-        </button>
+       <button id="continue-checkout-btn" class="btn btn-primary btn-lg btn-full" :disabled="loading" @click="startPayment">
+  <span v-if="loading" class="spinner"></span>
+  {{ loading ? 'Starting checkout…' : 'Continue to Kora Checkout' }}
+</button>
+<p v-if="error" class="text-sm" style="color: var(--danger); margin-top: 10px; text-align: center;">{{ error }}</p>
       </div>
     </div>
 
     <!-- CHECKOUT -->
-    <div v-if="step === 'checkout' && job" class="pay-wrap">
-      <div class="pay-header">
-        <div class="pay-icon-wrap">💳</div>
-        <h1>Kora Checkout</h1>
-        <p class="text-muted">Secure payment powered by Kora Pay</p>
-      </div>
-      <div class="card pay-card">
-        <div class="amount-banner">
-          <span class="text-muted text-sm">Paying into escrow</span>
-          <span class="banner-amount">{{ store.formatCurrency(job.total, job.currency) }}</span>
-        </div>
 
-        <!-- Method tabs -->
-        <div class="method-tabs">
-          <button :class="['method-btn', method === 'card' && 'active']" @click="method = 'card'">💳 Card</button>
-          <button :class="['method-btn', method === 'bank' && 'active']" @click="method = 'bank'">🏦 Bank Transfer</button>
-          <button :class="['method-btn', method === 'ussd' && 'active']" @click="method = 'ussd'">📱 USSD</button>
-        </div>
-
-        <!-- Card -->
-        <div v-if="method === 'card'" class="checkout-form">
-          <div class="form-group">
-            <label class="form-label">Cardholder Name</label>
-            <input v-model="card.name" type="text" class="form-input" placeholder="John Doe" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Card Number</label>
-            <input v-model="card.number" type="text" class="form-input" placeholder="0000  0000  0000  0000" maxlength="19" />
-          </div>
-          <div class="form-row-2">
-            <div class="form-group">
-              <label class="form-label">Expiry</label>
-              <input v-model="card.expiry" type="text" class="form-input" placeholder="MM/YY" maxlength="5" />
-            </div>
-            <div class="form-group">
-              <label class="form-label">CVV</label>
-              <input v-model="card.cvv" type="password" class="form-input" placeholder="•••" maxlength="4" />
-            </div>
-          </div>
-        </div>
-
-        <!-- Bank transfer -->
-        <div v-if="method === 'bank'" class="info-block">
-          <div class="info-row"><span class="text-muted text-sm">Bank Name</span><span class="font-bold text-sm">Kora Escrow Bank</span></div>
-          <div class="info-row"><span class="text-muted text-sm">Account Number</span><span class="font-bold text-sm mono">0123456789</span></div>
-          <div class="info-row"><span class="text-muted text-sm">Account Name</span><span class="font-bold text-sm">Kora Escrow Reserve</span></div>
-          <div class="info-row"><span class="text-muted text-sm">Amount</span><span class="font-bold text-sm text-accent">{{ store.formatCurrency(job.total, job.currency) }}</span></div>
-          <p class="text-muted text-sm" style="margin-top:10px">Transfer the exact amount shown. Your escrow activates after bank confirmation.</p>
-        </div>
-
-        <!-- USSD -->
-        <div v-if="method === 'ussd'" class="ussd-block">
-          <div class="ussd-code">*737*000*{{ ussdCode }}#</div>
-          <p class="text-muted text-sm">Dial this code on your registered mobile number to pay</p>
-        </div>
-
-        <button
-          id="pay-btn"
-          class="btn btn-primary btn-lg btn-full"
-          :disabled="processing"
-          @click="processPayment"
-        >
-          <span v-if="processing" class="spinner"></span>
-          {{ processing ? 'Processing…' : `Pay ${store.formatCurrency(job.total, job.currency)}` }}
-        </button>
-        <div class="secured-note">🔐 SSL encrypted · Powered by Kora Pay</div>
-      </div>
-    </div>
-
-    <!-- CONFIRMING (polling) -->
-    <div v-if="step === 'confirming'" class="status-screen">
-      <div class="pulse-wrap">
-        <div class="pulse-ring"></div>
-        <div class="status-big-icon">⏳</div>
-      </div>
-      <h2>Confirming Payment</h2>
-      <p class="text-muted">Verifying your payment with Kora… please don't close this page.</p>
-      <div class="poll-dots"><span></span><span></span><span></span></div>
-    </div>
-
-    <!-- CONFIRMED -->
-    <div v-if="step === 'confirmed'" class="status-screen">
-      <div class="success-badge">✅</div>
-      <h2>Payment Confirmed!</h2>
-      <p class="text-muted">{{ store.formatCurrency(job?.total, job?.currency) }} is now held in escrow. The freelancer can begin work on the first milestone.</p>
-      <button class="btn btn-primary btn-lg" style="margin-top:28px" @click="store.navigate('jobDetail', { jobId: store.selectedJobId })">
-        View Job →
-      </button>
-    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Clock3,
+  ShieldCheck,
+} from 'lucide-vue-next'
 import { store } from '../store.js'
-
-const job = computed(() => store.selectedJob)
-const step = ref('summary')   // summary | checkout | confirming | confirmed
-const processing = ref(false)
-const method = ref('card')
-const card = ref({ name: '', number: '', expiry: '', cvv: '' })
-const ussdCode = Math.floor(1000 + Math.random() * 9000)
-
-async function processPayment() {
-  processing.value = true
-  await new Promise(r => setTimeout(r, 2000))   // simulate Kora checkout
-  step.value = 'confirming'
-  processing.value = false
-  // Poll simulation — don't mark paid from redirect alone
-  await new Promise(r => setTimeout(r, 3000))
-  store.confirmPayment(store.selectedJobId)
-  step.value = 'confirmed'
-}
 </script>
 
 <style scoped>
-.pay-now { max-width: 520px; margin: 0 auto; animation: fadeIn 0.3s ease; }
+.pay-now {
+  max-width: 480px;
+}
+
 .back-btn { margin-bottom: 20px; }
 .pay-wrap { }
 
-.pay-header { text-align: center; margin-bottom: 28px; }
-.pay-icon-wrap { font-size: 2.5rem; margin-bottom: 14px; }
-.pay-header h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 8px; }
+.pay-header { margin-bottom: 22px; }
+.pay-icon-wrap {
+  display: flex;
+  justify-content: center;
+  color: var(--accent-light);
+  margin-bottom: 14px;
+}
+.pay-header h1 { font-size: 1.6rem; font-weight: 900; margin-bottom: 8px; }
 
-.pay-card { }
+.pay-card { padding: 20px; }
 .section-title { font-size: 1rem; font-weight: 800; margin-bottom: 16px; }
 .job-block { margin-bottom: 14px; }
 .job-block-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 4px; }
-.ms-summary-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.ms-summary-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
 .ms-summary-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.total-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.total-line { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .pay-total { font-size: 1.6rem; font-weight: 900; color: var(--accent-light); }
 
-.guarantee-list { display: flex; flex-direction: column; gap: 10px; background: var(--bg-surface); border-radius: var(--radius-md); padding: 16px; margin-bottom: 22px; }
-.guarantee-item { display: flex; align-items: flex-start; gap: 8px; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+.guarantee-list { display: flex; flex-direction: column; gap: 8px; padding: 13px; margin-bottom: 18px; }
+.guarantee-item { display: flex; align-items: flex-start; gap: 8px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; }
+.guarantee-item svg { flex: 0 0 auto; color: var(--accent-light); margin-top: 1px; }
 
 /* Checkout */
 .amount-banner {

@@ -15,22 +15,25 @@
             :class="['nav-link', store.view === 'board' && 'active']"
             @click="store.navigate('board')"
           >
-            📋 Job Board
+            <ClipboardList :size="16" />
+            Job Board
           </button>
           
           <button
-            v-if="store.isFreelancer"
+            v-if="store.isClient"
             :class="['nav-link', store.view === 'createJob' && 'active']"
             @click="store.navigate('createJob')"
           >
-            ➕ Post a Job
+            <Plus :size="16" />
+            Post a Job
           </button>
 
           <button
             :class="['nav-link', store.view === 'wallet' && 'active']"
             @click="store.navigate('wallet')"
           >
-            💳 Wallet
+            <Wallet :size="16" />
+            Wallet
           </button>
         </nav>
 
@@ -41,17 +44,25 @@
             @click="store.switchUser"
             :title="`Switch role to ${store.isClient ? 'Freelancer' : 'Client'}`"
           >
-            <span class="role-icon">{{ store.isClient ? '🏢 Client' : '💻 Freelancer' }}</span>
-            <span class="switch-hint">⇄ Switch</span>
+            <span class="role-icon">
+              <Building2 v-if="store.isClient" :size="15" />
+              <Laptop v-else :size="15" />
+              {{ store.isClient ? 'Client' : 'Freelancer' }}
+            </span>
+            <span class="switch-hint">
+              <Repeat2 :size="14" />
+              Switch
+            </span>
           </button>
 
           <div class="user-pill" @click="store.navigate('wallet')">
-            <div class="user-avatar">{{ store.currentUser.fullName.charAt(0) }}</div>
-            <span class="user-name">{{ store.currentUser.fullName }}</span>
+            {{ store.currentUser.full_name.charAt(0) }}
+            <span class="user-name">{{ store.currentUser.full_name }}</span>
           </div>
 
           <button class="btn btn-ghost btn-sm logout-btn" @click="store.logout" title="Sign Out">
-            🚪 Logout
+            <LogOut :size="16" />
+            Logout
           </button>
         </div>
       </div>
@@ -71,7 +82,10 @@
           <WalletView v-else-if="store.view === 'wallet'" />
           <div v-else class="empty-state">
             <h3>Page Not Found</h3>
-            <button class="btn btn-primary mt-4" @click="store.navigate('board')">Go to Job Board</button>
+            <button class="btn btn-primary mt-4" @click="store.navigate('board')">
+              Go to Job Board
+              <ArrowRight :size="16" />
+            </button>
           </div>
         </transition>
       </div>
@@ -81,9 +95,9 @@
     <footer v-if="store.currentUser" class="app-footer">
       <div class="footer-container">
         <div class="footer-info">
-          <span>🔒 256-bit Bank Grade Vault Escrow</span>
-          <span>⚡ Instant Settlement via Kora Rails</span>
-          <span>⚖️ Automated Milestone Arbitration</span>
+          <span><ShieldCheck :size="15" /> 256-bit Bank Grade Vault Escrow</span>
+          <span><Zap :size="15" /> Instant Settlement via Kora Rails</span>
+          <span><Scale :size="15" /> Automated Milestone Arbitration</span>
         </div>
         <div class="footer-copy">
           © 2026 Holdr Escrow Infrastructure · Powered by Kora rails
@@ -95,6 +109,19 @@
 
 <script setup>
 import { store } from './store.js'
+import {
+  ArrowRight,
+  Building2,
+  ClipboardList,
+  Laptop,
+  LogOut,
+  Plus,
+  Repeat2,
+  Scale,
+  ShieldCheck,
+  Wallet,
+  Zap,
+} from 'lucide-vue-next'
 import AuthView from './components/AuthView.vue'
 import JobBoard from './components/JobBoard.vue'
 import CreateJob from './components/CreateJob.vue'
@@ -178,6 +205,14 @@ import WalletView from './components/WalletView.vue'
   display: flex;
   align-items: center;
   gap: 6px;
+}
+.role-icon,
+.switch-hint,
+.logout-btn,
+.footer-info span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
 .nav-link:hover {
   color: var(--text-primary);
