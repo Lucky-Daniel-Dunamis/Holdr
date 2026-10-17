@@ -1,6 +1,5 @@
 import { reactive } from 'vue'
-import { login as apiLogin, register as apiRegister, listJobs, createJob as apiCreateJob, getJob, joinJob,
-  approveMilestone as apiApproveMilestone, fundJob } from './api.js'
+import { login as apiLogin, register as apiRegister, listJobs, createJob as apiCreateJob, getJob, joinJob, approveMilestone as apiApproveMilestone, fundJob, submitMilestone as apiSubmitMilestone } from './api.js'
 
 function uid() { return crypto.randomUUID() }
 
