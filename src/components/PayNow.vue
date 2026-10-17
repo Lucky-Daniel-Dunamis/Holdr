@@ -47,12 +47,12 @@
 
           <div class="guarantee-item">
             <Clock3 :size="16" />
-            <span>Auto-releases after {{ job.autoReleaseDays }} days if you don't respond</span>
+          <span>Auto-releases after {{ job.auto_release_days }} days if you don't respond</span>
           </div>
         </div>
        <button id="continue-checkout-btn" class="btn btn-primary btn-lg btn-full" :disabled="loading" @click="startPayment">
   <span v-if="loading" class="spinner"></span>
-  {{ loading ? 'Starting checkout…' : 'Continue to Kora Checkout' }}
+{{ loading ? (slowNotice ? 'Waking up the server…' : 'Starting checkout…') : 'Continue to Kora Checkout' }}
 </button>
 <p v-if="error" class="text-sm" style="color: var(--danger); margin-top: 10px; text-align: center;">{{ error }}</p>
       </div>
@@ -72,6 +72,29 @@ import {
   ShieldCheck,
 } from 'lucide-vue-next'
 import { store } from '../store.js'
+
+const step = ref('summary')
+const job = computed(() => store.selectedJob)
+const loading = ref(false)
+const error = ref('')
+const slowNotice = ref(false)
+let slowTimer = null
+
+async function startPayment() {
+  loading.value = true
+  error.value = ''
+  slowNotice.value = false
+  slowTimer = setTimeout(() => { slowNotice.value = true }, 3000)
+  try {
+    const { checkout_url } = await store.fundJob(job.value.id)
+    window.location.href = checkout_url
+  } catch (e) {
+    error.value = e.response?.data?.detail || 'Could not start payment'
+    loading.value = false
+  } finally {
+    clearTimeout(slowTimer)
+  }
+}
 </script>
 
 <style scoped>
