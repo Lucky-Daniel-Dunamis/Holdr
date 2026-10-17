@@ -166,7 +166,6 @@ async function submit() {
   if (!canPublish.value) return
   loading.value = true
   try {
-    await new Promise(r => setTimeout(r, 600))
     const job = await store.createJob({
       title: form.title,
       description: form.description,
@@ -177,7 +176,7 @@ async function submit() {
     })
     store.navigate('jobDetail', { jobId: job.id })
   } catch (e) {
-    error.value = e.message
+    error.value = e.response?.data?.detail || 'Could not create job'
   } finally {
     loading.value = false
   }
