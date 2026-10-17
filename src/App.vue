@@ -98,12 +98,12 @@
     <footer v-if="store.currentUser" class="app-footer">
       <div class="footer-container">
         <div class="footer-info">
-          <span><ShieldCheck :size="15" /> 256-bit Bank Grade Vault Escrow</span>
-          <span><Zap :size="15" /> Instant Settlement via Kora Rails</span>
-          <span><Scale :size="15" /> Automated Milestone Arbitration</span>
+          <span><ShieldCheck :size="15" /> Payments held safely until milestones are approved</span>
+          <span><Zap :size="15" /> Fast payouts through Kora</span>
+          <span><Scale :size="15" /> Public and Private Jobs, your Choice</span>
         </div>
         <div class="footer-copy">
-          © 2026 Holdr Escrow Infrastructure · Powered by Kora rails
+          © 2026 Holdr · Hire and get paid with trust · Powered by Kora
         </div>
       </div>
     </footer>
