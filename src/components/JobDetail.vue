@@ -164,6 +164,7 @@ async function doJoin() {
   joining.value = true
   try {
     await store.joinJob(job.value.id)
+    store.showToast('You joined the job!')
   } finally {
     joining.value = false
   }
@@ -179,6 +180,7 @@ async function doApprove() {
   approving.value = true
   try {
     await store.approveMilestone(job.value.id, confirmMilestone.value.id)
+    store.showToast('Milestone approved — payout initiated')
   } finally {
     showConfirm.value = false
     approving.value = false
