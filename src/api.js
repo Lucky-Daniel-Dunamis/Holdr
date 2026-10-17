@@ -59,4 +59,17 @@ export async function submitMilestone(jobId, milestoneId) {
   const response = await api.post(`/job/${jobId}/milestones/${milestoneId}/submit`)
   return response.data
 }
+
+export async function listBanks() {
+  const response = await api.get('/job/misc/banks')
+  return response.data
+}
+
+export async function setBankDetails(bankCode, accountNumber) {
+  const response = await api.post('/job/me/bank-details', {
+    bank_code: bankCode,
+    account_number: accountNumber,
+  })
+  return response.data
+}
 export default api
