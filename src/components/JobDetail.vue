@@ -55,7 +55,7 @@
         </div>
         <button class="btn btn-primary btn-lg" :disabled="joining" @click="doJoin">
   <span v-if="joining" class="spinner"></span>
-  {{ joining ? 'Joining…' : 'Join Job' }}
+  {{ joining ? (slowNotice ? 'Waking up the server…' : 'Joining…') : 'Join Job' }}
 </button>
       </div>
       <!-- Client CTA: Accept & Pay -->
@@ -132,7 +132,17 @@ import { store } from '../store.js'
 onMounted(() => {
   if (store.selectedJobId) store.fetchJob(store.selectedJobId)
 })
+const slowNotice = ref(false)
+let slowTimer = null
 
+function startSlowTimer() {
+  slowNotice.value = false
+  slowTimer = setTimeout(() => { slowNotice.value = true }, 3000)
+}
+function stopSlowTimer() {
+  clearTimeout(slowTimer)
+  slowNotice.value = false
+}
 const showConfirm = ref(false)
 const confirmMilestone = ref(null)
 const approving = ref(false)
@@ -162,10 +172,12 @@ function countdown(ts) {
 }
 async function doJoin() {
   joining.value = true
+  startSlowTimer()
   try {
     await store.joinJob(job.value.id)
     store.showToast('You joined the job!')
   } finally {
+    stopSlowTimer()
     joining.value = false
   }
 }
