@@ -83,7 +83,7 @@
           </div>
           <div class="meta-stat">
             <span class="meta-key">Milestones</span>
-            <span class="meta-val">{{ job.milestones.length }}</span>
+            <span class="meta-val">Click View to see milestone</span>
           </div>
         </div>
         <div class="job-card-footer">
