@@ -322,6 +322,23 @@ import WalletView from './components/WalletView.vue'
   justify-content: center;
 }
 
+  .global-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  z-index: 1000;
+  font-size: 0.9rem;
+  font-weight: 600;
+  animation: fadeIn 0.2s ease;
+  }
+
 @media (max-width: 768px) {
   .nav-container {
     flex-wrap: wrap;
