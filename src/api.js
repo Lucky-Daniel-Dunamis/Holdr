@@ -78,9 +78,11 @@ export async function listBanks() {
 }
 
 export async function setBankDetails(bankCode, accountNumber) {
-  const response = await api.post('/job/me/bank-details', {
-    bank_code: bankCode,
-    account_number: accountNumber,
+  const response = await api.post('/job/me/bank-details', null, {
+    params: {
+      bank_code: bankCode,
+      account_number: accountNumber,
+    },
   })
   return response.data
 }
