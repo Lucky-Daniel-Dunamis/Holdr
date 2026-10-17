@@ -89,6 +89,7 @@ async function submit() {
   loading.value = true
   try {
     await store.submitMilestone(job.value.id, milestone.value.id)
+    store.showToast('Work submitted!')
     store.navigate('jobDetail', { jobId: job.value.id })
   } catch (e) {
     error.value = e.response?.data?.detail || 'Could not submit work'
