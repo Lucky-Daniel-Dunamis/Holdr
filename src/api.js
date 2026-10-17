@@ -86,4 +86,9 @@ export async function setBankDetails(bankCode, accountNumber) {
   })
   return response.data
 }
+
+export async function myTransactions() {
+  const response = await api.get('/job/me/transactions')
+  return response.data
+}
 export default api
