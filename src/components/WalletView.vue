@@ -42,6 +42,11 @@
             <div class="form-group flex-1">
               <label class="form-label">Select Bank</label>
               <select v-model="bankForm.bankCode" class="form-select" required :disabled="banksLoading">
+                <select v-model="bankForm.bankCode" class="form-select" required :disabled="banksLoading">
+  <option value="" disabled>{{ banksLoading ? 'Loading banks…' : 'Choose your bank' }}</option>
+  <option value="033">🧪 Test Bank (Sandbox)</option>
+  <option v-for="b in banks" :key="b.code" :value="b.code">{{ b.name }}</option>
+</select>
                 <option value="" disabled>{{ banksLoading ? 'Loading banks…' : 'Choose your bank' }}</option>
                 <option v-for="b in banks" :key="b.code" :value="b.code">{{ b.name }}</option>
               </select>
