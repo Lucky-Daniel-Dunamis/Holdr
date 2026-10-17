@@ -3,7 +3,7 @@ import { login as apiLogin, register as apiRegister,
         listJobs, createJob as apiCreateJob, getJob, joinJob, 
         approveMilestone as apiApproveMilestone, fundJob, 
         submitMilestone as apiSubmitMilestone, listBanks,
-        setBankDetails } from './api.js'
+        setBankDetails, myTransactions } from './api.js'
 
 function uid() { return crypto.randomUUID() }
 
