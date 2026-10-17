@@ -80,7 +80,13 @@ showToast(message) {
     return data.user
   },
 
-  logout() { this.currentUser = null; this.view = 'auth'; this.save() },
+        logout() {
+  localStorage.removeItem('holdr_token')
+  localStorage.removeItem('holdr_user')
+  this.currentUser = null
+  this.view = 'auth'
+  this.save()
+},
 
   async createJob(payload) {
     const job = await apiCreateJob(payload)
