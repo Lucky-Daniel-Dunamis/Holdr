@@ -61,7 +61,7 @@ export async function submitMilestone(jobId, milestoneId) {
 }
 
 export async function listBanks() {
-  const response = await api.get('/job/misc/banks')
+  const response = await api.get('/job/banks')
   return response.data
 }
 
