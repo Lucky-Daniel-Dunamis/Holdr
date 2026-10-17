@@ -55,7 +55,7 @@
 
           <div class="auto-note">
             <span>⏱️</span>
-            <span>The client has <strong>{{ job?.autoReleaseDays }} days</strong> to review. If they don't respond, payment auto-releases to you.</span>
+            <span>The client has <strong>{{ job?.auto_release_days }} days</strong> to review. If they don't respond, payment auto-releases to you.</span>
           </div>
 
           <button
@@ -88,14 +88,10 @@ async function submit() {
   if (!form.note.trim()) { error.value = 'Please add a note describing your work'; return }
   loading.value = true
   try {
-    await new Promise(r => setTimeout(r, 700))
-    store.submitMilestone(job.value.id, milestone.value.id, {
-      note: form.note.trim(),
-      fileOrLink: form.fileOrLink.trim() || null,
-    })
+    await store.submitMilestone(job.value.id, milestone.value.id)
     store.navigate('jobDetail', { jobId: job.value.id })
   } catch (e) {
-    error.value = e.message
+    error.value = e.response?.data?.detail || 'Could not submit work'
   } finally {
     loading.value = false
   }
