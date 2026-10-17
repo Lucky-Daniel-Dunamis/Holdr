@@ -3,7 +3,7 @@
     <div class="wallet-header">
       <div>
         <h1 class="page-title">Wallet &amp; Payouts</h1>
-        <p class="text-muted">Manage your funds, view escrow balances, and track payment transactions</p>
+        <p class="text-muted">Manage your payout details</p>
       </div>
       <div class="user-role-badge">
         <span class="badge" :class="store.isFreelancer ? 'badge-primary' : 'badge-client'">
@@ -12,52 +12,26 @@
       </div>
     </div>
 
-    <!-- FREELANCER WALLET -->
     <template v-if="store.isFreelancer">
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">Total Earned</div>
-          <div class="stat-value text-success">
-            {{ store.formatCurrency(userWallet.earnings || 0, 'NGN') }}
-          </div>
-          <div class="stat-hint">Across all approved milestones</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Paid Out to Bank</div>
-          <div class="stat-value">
-            {{ store.formatCurrency(userWallet.paid || 0, 'NGN') }}
-          </div>
-          <div class="stat-hint">Processed to your payout account</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Settlement Rail</div>
-          <div class="stat-rail">
-            <span class="rail-logo">⚡ Kora Pay</span>
-            <span class="rail-status">Live Escrow</span>
-          </div>
-          <div class="stat-hint">Instant Nigerian bank settlement</div>
-        </div>
-      </div>
-
-      <!-- Bank Details -->
       <div class="card mb-24">
         <div class="card-head-row">
           <div>
             <h2 class="card-title">Payout Bank Account</h2>
             <p class="text-muted text-sm">Where your milestone earnings get deposited</p>
           </div>
-          <button v-if="!editingBank && userWallet.bankDetails" class="btn btn-ghost btn-sm" @click="editingBank = true">
+          <button v-if="!editingBank" class="btn btn-ghost btn-sm" @click="editingBank = true">
             ✏️ Edit Details
           </button>
         </div>
 
-        <div v-if="!editingBank && userWallet.bankDetails" class="bank-display">
+        <div v-if="error" class="alert alert-error mb-16">⚠️ {{ error }}</div>
+
+        <div v-if="!editingBank" class="bank-display">
           <div class="bank-chip">
             <div class="bank-icon">🏛️</div>
             <div class="bank-info">
-              <div class="bank-name">{{ userWallet.bankDetails.bankName }}</div>
-              <div class="bank-acc">{{ userWallet.bankDetails.accountNumber }}</div>
-              <div class="bank-holder">{{ userWallet.bankDetails.accountName }}</div>
+              <div class="bank-acc">{{ store.currentUser?.account_number }}</div>
+              <div class="bank-holder">{{ store.currentUser?.account_name }}</div>
             </div>
             <span class="badge badge-success ml-auto">Verified</span>
           </div>
@@ -67,16 +41,9 @@
           <div class="form-row">
             <div class="form-group flex-1">
               <label class="form-label">Select Bank</label>
-              <select v-model="bankForm.bankName" class="form-select" required>
-                <option value="" disabled>Choose your bank</option>
-                <option value="Access Bank">Access Bank</option>
-                <option value="First Bank of Nigeria">First Bank of Nigeria</option>
-                <option value="Guaranty Trust Bank (GTBank)">Guaranty Trust Bank (GTBank)</option>
-                <option value="Kuda Bank">Kuda Bank</option>
-                <option value="Moniepoint MFB">Moniepoint MFB</option>
-                <option value="Opay">Opay</option>
-                <option value="United Bank for Africa (UBA)">United Bank for Africa (UBA)</option>
-                <option value="Zenith Bank">Zenith Bank</option>
+              <select v-model="bankForm.bankCode" class="form-select" required :disabled="banksLoading">
+                <option value="" disabled>{{ banksLoading ? 'Loading banks…' : 'Choose your bank' }}</option>
+                <option v-for="b in banks" :key="b.code" :value="b.code">{{ b.name }}</option>
               </select>
             </div>
             <div class="form-group flex-1">
@@ -86,177 +53,67 @@
                 type="text"
                 maxlength="10"
                 class="form-input"
-                placeholder="10-digit NUBAN"
+                placeholder="10-digit account number"
                 required
               />
             </div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Account Name</label>
-            <input
-              v-model="bankForm.accountName"
-              type="text"
-              class="form-input"
-              placeholder="Full name on bank account"
-              required
-            />
-          </div>
           <div class="btn-group">
-            <button type="submit" class="btn btn-primary btn-sm">Save Bank Details</button>
-            <button v-if="userWallet.bankDetails" type="button" class="btn btn-ghost btn-sm" @click="editingBank = false">Cancel</button>
+            <button type="submit" class="btn btn-primary btn-sm" :disabled="saving">
+              <span v-if="saving" class="spinner"></span>
+              {{ saving ? 'Verifying…' : 'Save Bank Details' }}
+            </button>
+            <button v-if="store.currentUser?.account_name" type="button" class="btn btn-ghost btn-sm" @click="editingBank = false">Cancel</button>
           </div>
         </form>
       </div>
-
-      <!-- Payout History -->
-      <div class="card">
-        <h2 class="card-title">Payout History</h2>
-        <div v-if="!freelancerPayouts.length" class="empty-state-sm">
-          <span class="empty-icon">💸</span>
-          <p class="text-muted">No payouts received yet. Complete milestones to earn!</p>
-        </div>
-        <div v-else class="tx-table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Job &amp; Milestone</th>
-                <th>Date</th>
-                <th>Rail</th>
-                <th>Amount</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in freelancerPayouts" :key="item.id">
-                <td>
-                  <strong>{{ item.jobTitle }}</strong>
-                  <div class="text-muted text-sm">{{ item.description }}</div>
-                </td>
-                <td class="text-muted text-sm">{{ fmtDate(item.timestamp) }}</td>
-                <td><span class="badge badge-pill">Kora Payout</span></td>
-                <td class="text-success font-bold">+{{ store.formatCurrency(item.amount, item.currency) }}</td>
-                <td><span class="badge badge-success">Completed</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
     </template>
 
-    <!-- CLIENT WALLET -->
     <template v-else>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">Total Spent / Deposited</div>
-          <div class="stat-value text-accent">
-            {{ store.formatCurrency(totalClientSpent, 'NGN') }}
-          </div>
-          <div class="stat-hint">Funded via Kora Checkout</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Held in Escrow</div>
-          <div class="stat-value text-warning">
-            {{ store.formatCurrency(userWallet.escrowHeld || 0, 'NGN') }}
-          </div>
-          <div class="stat-hint">Protected until you approve</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Escrow Guarantee</div>
-          <div class="stat-rail">
-            <span class="rail-logo">🔒 100% Secure</span>
-            <span class="rail-status">Protected</span>
-          </div>
-          <div class="stat-hint">Auto-refund on unfulfilled contracts</div>
-        </div>
-      </div>
-
-      <!-- Deposit History -->
       <div class="card">
-        <h2 class="card-title">Deposit &amp; Funding History</h2>
-        <div v-if="!clientDeposits.length" class="empty-state-sm">
-          <span class="empty-icon">💳</span>
-          <p class="text-muted">No deposits yet. Accept and pay for an open job to fund escrow!</p>
-        </div>
-        <div v-else class="tx-table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Job</th>
-                <th>Date</th>
-                <th>Payment Method</th>
-                <th>Amount Deposited</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="item in clientDeposits" :key="item.id">
-                <td>
-                  <strong>{{ item.jobTitle }}</strong>
-                </td>
-                <td class="text-muted text-sm">{{ fmtDate(item.timestamp) }}</td>
-                <td><span class="badge badge-pill">Kora Checkout</span></td>
-                <td class="text-accent font-bold">{{ store.formatCurrency(item.amount, item.currency || 'NGN') }}</td>
-                <td><span class="badge badge-success">Escrow Funded</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <h2 class="card-title">Escrow Protection</h2>
+        <p class="text-muted">Funds you pay into a job are held securely and released to the freelancer only when you approve each milestone.</p>
       </div>
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { store } from '../store.js'
 
-const userWallet = computed(() => store.currentUser?.wallet || {})
-const editingBank = ref(!store.currentUser?.wallet?.bankDetails)
+const banks = ref([])
+const banksLoading = ref(true)
+const editingBank = ref(!store.currentUser?.account_name)
+const saving = ref(false)
+const error = ref('')
 
 const bankForm = reactive({
-  bankName: store.currentUser?.wallet?.bankDetails?.bankName || '',
-  accountNumber: store.currentUser?.wallet?.bankDetails?.accountNumber || '',
-  accountName: store.currentUser?.wallet?.bankDetails?.accountName || store.currentUser?.fullName || '',
+  bankCode: store.currentUser?.bank_code || '',
+  accountNumber: store.currentUser?.account_number || '',
 })
 
-function saveBank() {
-  store.updateBankDetails({ ...bankForm })
-  editingBank.value = false
+onMounted(async () => {
+  try {
+    const result = await store.listBanks()
+    banks.value = result.data || []
+  } finally {
+    banksLoading.value = false
+  }
+})
+
+async function saveBank() {
+  error.value = ''
+  saving.value = true
+  try {
+    await store.setBankDetails(bankForm.bankCode, bankForm.accountNumber)
+    editingBank.value = false
+  } catch (e) {
+    error.value = e.response?.data?.detail || 'Could not verify bank account'
+  } finally {
+    saving.value = false
+  }
 }
-
-function fmtDate(ts) {
-  if (!ts) return ''
-  return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-}
-
-const freelancerPayouts = computed(() => {
-  const payouts = []
-  store.jobs.forEach(job => {
-    if (job.freelancerId === store.currentUser?.id) {
-      (job.transactions || []).forEach(tx => {
-        if (tx.type === 'payout') {
-          payouts.push({
-            id: tx.id,
-            jobTitle: job.title,
-            currency: job.currency,
-            description: tx.description,
-            amount: tx.amount,
-            timestamp: tx.timestamp,
-          })
-        }
-      })
-    }
-  })
-  return payouts.sort((a, b) => b.timestamp - a.timestamp)
-})
-
-const clientDeposits = computed(() => {
-  return (userWallet.value.paymentsHistory || []).slice().sort((a, b) => b.timestamp - a.timestamp)
-})
-
-const totalClientSpent = computed(() => {
-  return (userWallet.value.paymentsHistory || []).reduce((sum, item) => sum + (Number(item.amount) || 0), 0)
-})
 </script>
 
 <style scoped>
