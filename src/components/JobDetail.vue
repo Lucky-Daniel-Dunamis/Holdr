@@ -53,7 +53,10 @@
           <span>🤝</span>
           <span>Join this job to start working on it</span>
         </div>
-        <button class="btn btn-primary btn-lg" @click="doJoin">Join Job</button>
+        <button class="btn btn-primary btn-lg" :disabled="joining" @click="doJoin">
+  <span v-if="joining" class="spinner"></span>
+  {{ joining ? 'Joining…' : 'Join Job' }}
+</button>
       </div>
       <!-- Client CTA: Accept & Pay -->
       <div v-if="canClientPay" class="pay-cta">
@@ -133,7 +136,7 @@ onMounted(() => {
 const showConfirm = ref(false)
 const confirmMilestone = ref(null)
 const approving = ref(false)
-
+const joining = ref(false)
 const job = computed(() => store.selectedJob)
 const isJobClient = computed(() => job.value?.client_id === store.currentUser?.id)
 const isJobFreelancer = computed(() => job.value?.freelancer_id === store.currentUser?.id)
@@ -158,8 +161,14 @@ function countdown(ts) {
   return `Auto-releases in ${mins}m`
 }
 async function doJoin() {
-  await store.joinJob(job.value.id)
+  joining.value = true
+  try {
+    await store.joinJob(job.value.id)
+  } finally {
+    joining.value = false
+  }
 }
+  
 function fmtDate(ts) {
   return new Date(ts).toLocaleString('en', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
 }
