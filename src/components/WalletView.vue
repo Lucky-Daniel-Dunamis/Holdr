@@ -112,6 +112,7 @@ async function saveBank() {
   saving.value = true
   try {
     await store.setBankDetails(bankForm.bankCode, bankForm.accountNumber)
+    store.showToast('Bank details saved')
     editingBank.value = false
   } catch (e) {
     error.value = e.response?.data?.detail || 'Could not verify bank account'
