@@ -20,7 +20,7 @@
             <p class="text-muted text-sm">Where your milestone earnings get deposited</p>
           </div>
           <button v-if="!editingBank" class="btn btn-ghost btn-sm" @click="editingBank = true">
-            ✏️ Edit Details
+            Edit Details
           </button>
         </div>
 
@@ -44,7 +44,7 @@
               <select v-model="bankForm.bankCode" class="form-select" required :disabled="banksLoading">
                 <select v-model="bankForm.bankCode" class="form-select" required :disabled="banksLoading">
   <option value="" disabled>{{ banksLoading ? 'Loading banks…' : 'Choose your bank' }}</option>
-  <option value="033">🧪 Test Bank (Sandbox)</option>
+  <option value="033"> Test Bank (Sandbox)</option>
   <option v-for="b in banks" :key="b.code" :value="b.code">{{ b.name }}</option>
 </select>
                 <option value="" disabled>{{ banksLoading ? 'Loading banks…' : 'Choose your bank' }}</option>
