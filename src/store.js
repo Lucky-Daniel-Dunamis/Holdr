@@ -15,7 +15,7 @@ const saved = load()
 
 
 export const store = reactive({
-  view: saved?.view || (saved?.currentUser ? 'board' : 'auth'),
+  view: saved?.view && JSON.parse(localStorage.getItem('holdr_user') || 'null') ? saved.view : 'auth',
   currentUser: JSON.parse(localStorage.getItem('holdr_user') || 'null'),
   selectedJobId: saved?.selectedJobId || null,
   selectedMilestoneId: saved?.selectedMilestoneId || null,
