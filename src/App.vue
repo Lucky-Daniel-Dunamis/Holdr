@@ -67,6 +67,9 @@
         </div>
       </div>
     </header>
+    <div v-if="store.toast.visible" class="global-toast">
+  {{ store.toast.message }}
+</div>
 
     <!-- Main Content Area -->
     <main class="app-main">
