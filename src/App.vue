@@ -78,7 +78,7 @@
           <JobDetail v-else-if="store.view === 'jobDetail'" />
           <PayNow v-else-if="store.view === 'payNow'" />
           <SubmitWork v-else-if="store.view === 'submitWork'" />
-          <ApproveWork v-else-if="store.view === 'approveWork'" />
+          
           <WalletView v-else-if="store.view === 'wallet'" />
           <div v-else class="empty-state">
             <h3>Page Not Found</h3>
@@ -128,7 +128,6 @@ import CreateJob from './components/CreateJob.vue'
 import JobDetail from './components/JobDetail.vue'
 import PayNow from './components/PayNow.vue'
 import SubmitWork from './components/SubmitWork.vue'
-import ApproveWork from './components/ApproveWork.vue'
 import WalletView from './components/WalletView.vue'
 </script>
 
