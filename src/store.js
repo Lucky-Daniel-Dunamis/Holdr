@@ -122,7 +122,9 @@ showToast(message) {
     await apiApproveMilestone(jobId, milestoneId)
     await this.fetchJob(jobId)
   },
-
+async fetchTransactions() {
+  this.transactions = await myTransactions()
+},
   requestChanges(jobId, milestoneId) {
     const job = this.jobs.find(j => j.id === jobId)
     if (!job) return
