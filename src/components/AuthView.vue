@@ -34,9 +34,9 @@
                 <input id="login-password" v-model="lf.password" type="password" class="form-input" placeholder="••••••••" required />
               </div>
               <button id="login-submit" type="submit" class="btn btn-primary btn-lg btn-full" :disabled="loading">
-                <span v-if="loading" class="spinner"></span>
-                {{ loading ? 'Signing in…' : 'Sign In' }}
-              </button>
+  <span v-if="loading" class="spinner"></span>
+  {{ loading ? (slowNotice ? 'Waking up the server…' : 'Signing in…') : 'Sign In' }}
+</button>
 
 
             </form>
@@ -77,7 +77,7 @@
               </div>
               <button id="reg-submit" type="submit" class="btn btn-primary btn-lg btn-full" :disabled="loading">
                 <span v-if="loading" class="spinner"></span>
-                {{ loading ? 'Creating account…' : 'Create Account' }}
+                {{ loading ? (slowNotice ? 'Waking up the server…' : 'Registering...') : 'Create Account' }}
               </button>
             </form>
           </div>
@@ -93,6 +93,8 @@ import { store } from '../store.js'
 
 const mode = ref('login')
 const loading = ref(false)
+const slowNotice = ref(false)
+let slowTimer = null
 const error = ref('')
 const lf = reactive({ email: '', password: '' })
 const rf = reactive({ fullName: '', email: '', password: '', role: 'client' })
@@ -104,9 +106,17 @@ async function handleLogin() {
   error.value = ''
   if (!lf.email || !lf.password) { error.value = 'Please fill in all fields'; return }
   loading.value = true
-  try { await delay(500); store.login(lf.email, lf.password) }
-  catch (e) { error.value = e.response?.data?.detail || 'Something went wrong' }
-  finally { loading.value = false }
+  slowNotice.value = false
+  slowTimer = setTimeout(() => { slowNotice.value = true }, 3000)
+  try {
+    await store.login(lf.email, lf.password)
+  } catch (e) {
+    error.value = e.response?.data?.detail || 'Something went wrong'
+  } finally {
+    clearTimeout(slowTimer)
+    slowNotice.value = false
+    loading.value = false
+  }
 }
 
 async function handleRegister() {
@@ -116,7 +126,9 @@ async function handleRegister() {
   loading.value = true
   try { await delay(500); store.register({ ...rf }) }
   catch (e) { error.value = e.response?.data?.detail || 'Something went wrong' }
-  finally { loading.value = false }
+  finally { clearTimeout(slowTimer)
+    slowNotice.value = false
+    loading.value = false }
 }
 </script>
 
