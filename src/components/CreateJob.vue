@@ -174,6 +174,7 @@ async function submit() {
       visibility: 'public',
       milestone: milestones.value.map(m => ({ title: m.title, amount: Number(m.amount) })),
     })
+    store.showToast('Job posted!')
     store.navigate('jobDetail', { jobId: job.id })
   } catch (e) {
     error.value = e.response?.data?.detail || 'Could not create job'
