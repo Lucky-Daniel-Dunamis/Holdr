@@ -20,6 +20,7 @@ export const store = reactive({
   selectedJobId: saved?.selectedJobId || null,
   selectedMilestoneId: saved?.selectedMilestoneId || null,
   jobs: [],
+        transactions: [],
 
   get selectedJob() { return this.jobs.find(j => j.id === this.selectedJobId) || null },
   get selectedMilestone() {
