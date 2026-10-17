@@ -39,6 +39,18 @@ export const store = reactive({
     return data.user
   },
 
+
+        toast: { message: '', visible: false },
+
+showToast(message) {
+  this.toast.message = message
+  this.toast.visible = true
+  clearTimeout(this._toastTimer)
+  this._toastTimer = setTimeout(() => {
+    this.toast.visible = false
+  }, 3000)
+},
+
   save() {
     try {
       localStorage.setItem('kora_v1', JSON.stringify({
