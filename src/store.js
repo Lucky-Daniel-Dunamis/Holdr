@@ -76,16 +76,10 @@ export const store = reactive({
     return await fundJob(jobId)
   },
 
-  submitMilestone(jobId, milestoneId, { note, fileOrLink }) {
-    const job = this.jobs.find(j => j.id === jobId)
-    if (!job) return
-    const m = job.milestones.find(m => m.id === milestoneId)
-    if (!m) return
-    m.status = 'submitted'; m.note = note; m.fileOrLink = fileOrLink
-    m.submittedAt = Date.now()
-    m.autoReleaseAt = Date.now() + (job.autoReleaseDays * 24 * 60 * 60 * 1000)
-    this.save()
-  },
+  async submitMilestone(jobId, milestoneId) {
+  await apiSubmitMilestone(jobId, milestoneId)
+  await this.fetchJob(jobId)
+},
 
   async fetchJob(jobId) {
     const job = await getJob(jobId)
