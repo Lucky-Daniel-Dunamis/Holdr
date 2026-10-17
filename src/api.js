@@ -12,6 +12,18 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('holdr_token')
+      localStorage.removeItem('holdr_user')
+      window.location.reload()
+    }
+    return Promise.reject(error)
+  }
+)
+
 export async function login(email, password) {
   const response = await api.post('/auth/login', { email, password })
   return response.data
