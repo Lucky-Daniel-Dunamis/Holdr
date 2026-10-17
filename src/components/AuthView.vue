@@ -10,7 +10,7 @@
       <div class="auth-brand">
         <div class="auth-logo">Hr</div>
         <h1 class="auth-title">Holdr<span style="color: var(--accent)">.</span></h1>
-        <p class="auth-subtitle">Pan-African milestone escrow infrastructure</p>
+        <p class="auth-subtitle">Hire with trust. Work with confidence.</p>
       </div>
 
       <div class="auth-card">
@@ -21,7 +21,7 @@
 
         <transition name="fade-slide" mode="out-in">
           <div :key="mode">
-            <div v-if="error" class="alert alert-error">⚠️ {{ error }}</div>
+            <div v-if="error" class="alert alert-error"> {{ error }}</div>
 
             <!-- LOGIN -->
             <form v-if="mode === 'login'" class="auth-form" @submit.prevent="handleLogin">
