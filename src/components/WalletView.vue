@@ -37,32 +37,6 @@
           </div>
         </div>
 
-        <div class="card">
-  <h2 class="card-title">Payout History</h2>
-  <div v-if="!store.transactions.length" class="empty-state-sm">
-    <span class="empty-icon">💸</span>
-    <p class="text-muted">No payouts yet.</p>
-  </div>
-  <div v-else class="tx-table-wrap">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Amount</th>
-          <th>Status</th>
-          <th>Date</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="tx in store.transactions" :key="tx.id">
-          <td class="text-success font-bold">+{{ store.formatCurrency(tx.amount, tx.currency) }}</td>
-          <td><span class="badge" :class="tx.status === 'success' ? 'badge-success' : 'badge-pill'">{{ tx.status }}</span></td>
-          <td class="text-muted text-sm">{{ new Date(tx.created_at).toLocaleDateString() }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
         <form v-else @submit.prevent="saveBank" class="bank-form">
           <div class="form-row">
             <div class="form-group flex-1">
@@ -94,6 +68,31 @@
           </div>
         </form>
       </div>
+          <div class="card">
+  <h2 class="card-title">Payout History</h2>
+  <div v-if="!store.transactions.length" class="empty-state-sm">
+    <span class="empty-icon">💸</span>
+    <p class="text-muted">No payouts yet.</p>
+  </div>
+  <div v-else class="tx-table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Amount</th>
+          <th>Status</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="tx in store.transactions" :key="tx.id">
+          <td class="text-success font-bold">+{{ store.formatCurrency(tx.amount, tx.currency) }}</td>
+          <td><span class="badge" :class="tx.status === 'success' ? 'badge-success' : 'badge-pill'">{{ tx.status }}</span></td>
+          <td class="text-muted text-sm">{{ new Date(tx.created_at).toLocaleDateString() }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
     </template>
 
     <template v-else>
