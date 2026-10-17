@@ -1,5 +1,9 @@
 import { reactive } from 'vue'
-import { login as apiLogin, register as apiRegister, listJobs, createJob as apiCreateJob, getJob, joinJob, approveMilestone as apiApproveMilestone, fundJob, submitMilestone as apiSubmitMilestone } from './api.js'
+import { login as apiLogin, register as apiRegister,
+        listJobs, createJob as apiCreateJob, getJob, joinJob, 
+        approveMilestone as apiApproveMilestone, fundJob, 
+        submitMilestone as apiSubmitMilestone, listBanks,
+        setBankDetails } from './api.js'
 
 function uid() { return crypto.randomUUID() }
 
@@ -110,14 +114,16 @@ export const store = reactive({
     this.save()
   },
 
-  updateBankDetails(bankDetails) {
-    const i = this.users.findIndex(u => u.id === this.currentUser.id)
-    if (i !== -1) {
-      this.users[i].wallet.bankDetails = { ...bankDetails }
-      this.currentUser = { ...this.users[i] }
-      this.save()
-    }
-  },
+  async listBanks() {
+  return await listBanks()
+},
+
+async setBankDetails(bankCode, accountNumber) {
+  const result = await setBankDetails(bankCode, accountNumber)
+  this.currentUser = { ...this.currentUser, bank_code: bankCode, account_number: accountNumber, account_name: result.account_name }
+  localStorage.setItem('holdr_user', JSON.stringify(this.currentUser))
+  return result
+},
 
   formatCurrency(amount, currency = 'NGN') {
     const sym = { NGN: '₦', USD: '$', GHS: 'GH₵' }
